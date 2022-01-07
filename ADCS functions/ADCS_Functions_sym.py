@@ -68,3 +68,49 @@ def skew_sym(sym1=symbols('a1'), sym2=symbols('a2'), sym3=symbols('a3')):
 #b1, b2, b3 = symbols('b1 b2 b3')
 #skew_sym(b1, b2, b3)
 #skew_sym()
+
+################################################################################
+
+
+def get_matrix_terms(matrix, dotx, doty, dotz):
+    """
+    Expand the terms of a 3x1 matrix into a 3x3 matrix(with the coefficients).
+    Example use: When deriving the kinematic differential equation get the coefficients of the 
+                 3x1 matrix containing the angular velocity components (dotx, doty, dotz)
+    """
+    return Matrix([
+        [matrix[0].coeff(dotx), matrix[0].coeff(doty), matrix[0].coeff(dotz)],
+        [matrix[1].coeff(dotx), matrix[1].coeff(doty), matrix[1].coeff(dotz)],
+        [matrix[2].coeff(dotx), matrix[2].coeff(doty), matrix[2].coeff(dotz)]])
+
+################################################################################
+#%% Elementary rotation matrices Functions:
+################################################################################
+
+def C1(angle=symbols("theta_1")):
+    x = symbols('x')
+    Rx = Matrix([
+        [1, 0, 0],
+        [0, cos(x), sin(x)],
+        [0, -sin(x), cos(x)]])
+    return Rx.subs(x, angle)
+
+
+def C2(angle=symbols("theta_2")):
+    y = symbols('y')
+    Ry = Matrix([
+        [cos(y), 0, -sin(y)],
+        [0,  1, 0],
+        [sin(y), 0, cos(y)]])
+    return Ry.subs(y, angle)
+
+
+def C3(angle=symbols("theta_3")):
+    z = symbols('z')
+    Rz = Matrix([
+        [cos(z), sin(z), 0],
+        [-sin(z),  cos(z), 0],
+        [0,    0, 1]])
+    return Rz.subs(z, angle)
+
+

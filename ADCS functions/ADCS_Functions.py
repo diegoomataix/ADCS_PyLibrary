@@ -109,15 +109,34 @@ def triad(b1, b2, r1, r2):
 ################################################################################
 ################################################################################
 #%% Quaternions
-def Euler_eigenaxis(C21):
+################################################################################
+def Eigenaxis_rot(C):
+    """
+    Input: 
+     - direction cosine Euler rotation matrix
+    Output: 
+     - principle Euler eigenaxis rotation angle phi
+    """
+    return acos(1/2*(C[0, 0] + C[1, 1] + C[2, 2] - 1))
+
+################################################################################
+def Eigenaxis_e(C):
+    """
+    Input: 
+     - direction cosine Euler rotation matrix
+    Output: 
+     - Find the principle Euler eigenaxis e
+    """
+    phi = Eigenaxis_rot(C)
+    return (1/(2*sin(phi))) * np.array([C[1, 2] - C[2, 1], C[2, 0] - C[0, 2], C[0, 1] - C[1, 0]])
+
+################################################################################
+def Euler_eigenaxis(C):
     """
     Find the principle Euler eigenaxis rotation angle phi and principle Euler eigenaxis e
     """
-    phi = acos(1/2*(C21[0, 0] + C21[1, 1] + C21[2, 2] - 1))
-    print('The principle Euler eigenaxis rotation angle is: ', np.rad2deg(phi))
-    e = (1/(2*sin(phi))) * np.array([C21[1, 2] - C21[2, 1],
-                                    C21[2, 0] - C21[0, 2], C21[0, 1] - C21[1, 0]])
-    print(e)
+    return Eigenaxis_rot(C), Eigenaxis_e(C)
+
 ################################################################################
 def DCM_to_Quaternion(C):
     """
@@ -128,7 +147,7 @@ def DCM_to_Quaternion(C):
     q[0:3] = (1/(4*q[3])) * np.array([C[1, 2] - C[2, 1],
                                   C[2, 0] - C[0, 2],
                                   C[0, 1] - C[1, 0]])
-    return q
+    return q#/np.linalg.norm(q)
 
 ################################################################################
 def diff_kinem_Quaternion(time, q):

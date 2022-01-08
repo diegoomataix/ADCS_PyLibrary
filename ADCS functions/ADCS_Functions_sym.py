@@ -70,8 +70,6 @@ def skew_sym(sym1=symbols('a1'), sym2=symbols('a2'), sym3=symbols('a3')):
 #skew_sym()
 
 ################################################################################
-
-
 def get_matrix_terms(matrix, dotx, doty, dotz):
     """
     Expand the terms of a 3x1 matrix into a 3x3 matrix(with the coefficients).

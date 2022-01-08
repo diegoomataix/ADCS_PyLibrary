@@ -5,6 +5,10 @@
 #%% Import libraries
 import numpy as np
 from math import sin, cos, pi
+from sys import path
+path.append(
+    "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+import ADCS_Functions as adcs
 
 #%% Data and functions
 e = 1/np.sqrt(3) * np.array([1, 1, 1])
@@ -15,23 +19,14 @@ def skew(v):
     return np.array([[0, -v[2], v[1]],
                      [v[2], 0, -v[0]],
                      [-v[1], v[0], 0]])
-# Vector product between a vector and its transpose
-def vp_trans(v):
-    return np.array([ [v[0]*v[0], v[0]*v[1], v[0]*v[2]],
-                      [v[1]*v[0], v[1]*v[1], v[1]*v[2]],
-                      [v[2]*v[0], v[1]*v[2], v[2]*v[2]]])
 
 # The rotation matrix for a given principle Euler eigenaxis rotation is given by:
-def C(e,phi):
-    C = cos(phi) * np.eye(3) + np.dot((1-cos(phi)), vp_trans(e)) - sin(phi)*skew(e)
-    return C
-
-C = C(e, phi)
+#def C(e,phi):
+#    C = cos(phi) * np.eye(3) + np.dot((1-cos(phi)), (e.T*e)) - sin(phi)*skew(e)
+#    return C
+C = adcs.Eigenaxis_rotMAT(e, phi)
+print(C)
 
 #%% Euler angles from DCM
-def Eul_ang(DCM):
-    return np.array([np.rad2deg(np.arctan(DCM[1, 2] / DCM[2, 2])),
-                     np.rad2deg(-np.arcsin(DCM[0, 2])),
-                     np.rad2deg(np.arctan(DCM[0, 1] / DCM[0, 0]))])
-
-theta = Eul_ang(C)
+theta = adcs.Eul_ang(C)
+print(theta)

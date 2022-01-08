@@ -11,7 +11,12 @@ The ECI coordinate have sub-indices G and the body coordinates sub-indices b.
 
 #%% Import libraries
 import numpy as np
-from math import sin, cos, pi
+# from math import sin, cos, pi
+from sys import path
+path.append(
+    "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+import ADCS_Functions as adcs
+import ADCS_Functions_sym as adcs_sym
 
 #%% Data
 # Define vectors
@@ -21,10 +26,10 @@ ns_eci = np.array([0, 1, 0]).T
 #%% 1) Determine rotation matrix CbG from body coordinates to ECI coordinates.
 
 # Define rotation matrix
-CbG = np.array([[cos(pi/4), sin(pi/4), 0],
-                [-sin(pi/4), cos(pi/4), 0],
-                [0, 0, 1]])
-
+#CbG = np.array([[cos(pi/4), sin(pi/4), 0],
+#                [-sin(pi/4), cos(pi/4), 0],
+#                [0, 0, 1]])
+CbG = np.array(adcs_sym.C3().subs("theta_3", np.pi/4)).astype(np.float64)
 print('rotation matrix CbG = ', CbG)
 
 #%% 2) Determine the coordinates of Earth and Sun vectors ne and ns respectively, in the spacecraft body frame.
@@ -39,42 +44,7 @@ print('ns_body = ', ns_body)
 
 #%%  3) Using the TRIAD method, construct the body frame triad with vectors t1b, t2b and t3b with the spacecraft coordinates of the unit vectors. Construct the reference frame triad with vectors t1i, t2i and t3i with the ECI coordinates of the unit vectors
 
-def triad(b1, b2, r1, r2):
-    """
-    Input: 
-     - body frame vectors: b1 and b2  
-     - reference frame vectors: r1 and r2
-    Output: 
-     - body frame triad: t1b, t2b and t3b  
-     - reference frame triad: t1i, t2i and t3i
-     - rotation matrix given by triad method
-    """
-    # Normalize the vectors
-    b1 = b1 / np.linalg.norm(b1)
-    b2 = b2 / np.linalg.norm(b2)
-    r1 = r1 / np.linalg.norm(r1)
-    r2 = r2 / np.linalg.norm(r2)
-
-   	# Calculate body coordinates
-    t1b = b1
-    t2b = np.cross(b1,b2)/np.linalg.norm(np.cross(b1,b2))
-    t3b = np.cross(t1b, t2b)
-    
-    rot_tb = np.array([t1b, t2b, t3b]).T # Rotational matrix 
-
-    # Calculate inertial coordinates
-    t1r = r1
-    t2r = np.cross(r1,r2)/np.linalg.norm(np.cross(r1,r2))
-    t3r = np.cross(t1r, t2r)
-    
-    rot_tr = np.array([t1r, t2r, t3r]).T # Rotational matrix
-    
-    # Calculate rotation matrix
-    Cbr = np.dot(rot_tb, rot_tr.T)
-    
-    return rot_tb, rot_tr, Cbr
-
-rot_triad_b, rot_triad_i, CbG_triad = triad(ne_body, ns_body, ne_eci, ns_eci)
+rot_triad_b, rot_triad_i, CbG_triad = adcs.triad(ne_body, ns_body, ne_eci, ns_eci)
 
 
 t1b = rot_triad_b[:,0]
@@ -93,10 +63,25 @@ print('triad_b = ', rot_triad_b)
 print('triad_i = ', rot_triad_i)
 
 #%%  5) Using the solution to part 4), compute rotation matric CbG using TRIAD method. Compare this with the result in part 1).
-print('CbG = ', CbG_triad)
+print('\n'); print('CbG = ', CbG_triad)
 print('Does the rot matrix coincide with the one from part 1?',
 np.allclose(CbG, CbG_triad))
 
 #%%  6) Using the measured vectors obtained in part 2), compute CbG using the q-method and QUEST method. 
 # Verify that you obtain the same result as in part 4). Note that it should be exactly the same, 
 # since no measurement noise has been added
+ 
+######## q-METHOD ########
+b = np.array([ne_body, ns_body])
+RF = np.array([ne_eci, ns_eci])
+
+B, k22, K11, k12, K, max_Eigenvalue, max_Eigenvector, C = adcs.q_method(b, RF)
+
+print('\n'); print(C)
+print('The RM (q-METHOD) is equal to that of the TRIAD method:', np.allclose(C, CbG))
+
+######## QUEST-METHOD ########
+S, K, p, q, C = adcs.QUEST(b, RF)
+
+print('\n'); print(C)
+print('The RM (QUEST-METHOD) is equal to that of the TRIAD method:', np.allclose(C, CbG))

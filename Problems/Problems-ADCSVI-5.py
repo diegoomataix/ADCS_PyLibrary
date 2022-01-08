@@ -3,6 +3,10 @@
 #%% Import libraries
 import numpy as np
 from math import sin, cos
+from sys import path
+path.append(
+    "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+import ADCS_Functions as adcs
 
 #%% Data and functions
 # Let the orientations of two spacecraft A and B relative to an inertial frame I 
@@ -23,10 +27,5 @@ C_BI = DCM_321(theta_B)
 C_AB = np.dot(C_AI, np.linalg.inv(C_BI))
 
 #%% Euler angles from DCM
-def Eul_ang(DCM):
-    return np.array([np.rad2deg(np.arctan(DCM[1,2] / DCM[2,2])),
-                     np.rad2deg(-np.arcsin(DCM[0,2])),
-                     np.rad2deg(np.arctan(DCM[0,1] / DCM[0,0]))])
-
-Eul_ang_AB = Eul_ang(C_AB)
+Eul_ang_AB = adcs.Eul_ang(C_AB)
 print('Euler angles of the orientation of the spacecraft A relative to spacecraft B:', (Eul_ang_AB))

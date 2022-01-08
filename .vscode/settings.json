@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./ADCS functions",
+        "./ADCS functions"
+    ]
+}

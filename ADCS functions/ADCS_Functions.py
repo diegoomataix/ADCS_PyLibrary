@@ -248,7 +248,7 @@ def triad(b1, b2, r1, r2):
     r1 = r1 / np.linalg.norm(r1)
     r2 = r2 / np.linalg.norm(r2)
 
-# Calculate body coordinates
+    # Calculate body coordinates
     t1b = b1
     t2b = np.cross(b1, b2)/np.linalg.norm(np.cross(b1, b2))
     t3b = np.cross(t1b, t2b)
@@ -286,6 +286,10 @@ def q_method(b, RF, weights=None):
 
     B = np.zeros((3, 3))
     for i in range(len(b)):
+        # Normalize the vectors
+        b[i] = b[i] / np.linalg.norm(b[i])
+        RF[i] = RF[i] / np.linalg.norm(RF[i])
+        # Find B matrix
         Bb = weights[i]*np.outer(b[i], RF[i])
         B += Bb
 
@@ -323,11 +327,16 @@ def QUEST(b, RF, weights=None):
         q: quaternion
         C: Rotation matrix
     """
+    # Weights
     if weights == None:
         weights = np.ones(len(b))
 
     B = np.zeros((3, 3))
     for i in range(len(b)):
+        # Normalize the vectors
+        b[i] = b[i] / np.linalg.norm(b[i])
+        RF[i] = RF[i] / np.linalg.norm(RF[i])
+        # Find B matrix
         Bb = weights[i]*np.outer(b[i], RF[i])
         B += Bb
 
@@ -358,3 +367,26 @@ def QUEST(b, RF, weights=None):
     return S, K, p, q, C
 
 ################################################################################
+# Solve Kinematic Differential Equation
+def solve_KDE(input, time_range=[0, 60], time_array=np.linspace(0, 60, 244), solver='E'):
+    """
+    Solve the Kinematic Differential Equation
+    Input:
+        input: Input data (quaternion or Euler angles)
+        time_range: Time range i.e. [0,60]
+        time_array: Time array i.e. time = np.linspace(0, 60, 244)
+        solver: Solver: either "q" for quaternion or "E" for Euler angles
+    Output:
+        output: Output data (solution time, solution_data)
+    """
+    from scipy.integrate import solve_ivp
+
+    if solver=='E':
+        sol = solve_ivp(diff_kinem_321_Euler, [0, 60], input, t_eval=time_array)
+    elif solver=='q':
+        sol = solve_ivp(diff_kinem_Quaternion, [
+                        0, 60], input, t_eval=time_array)
+    else:
+        print('Solver not found')
+    
+    return sol.t, sol.y

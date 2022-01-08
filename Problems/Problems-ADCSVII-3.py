@@ -16,28 +16,18 @@ from math import sin, cos
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
+from sys import path
+path.append(
+    "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+import ADCS_Functions as adcs
+
 #%% Data
 theta = np.deg2rad([80, 30, 40])
 time = np.linspace(0, 60, 61)
-#%% Functions
-def diff_kinem_321_Euler(time, theta):
-    """
-    Differential kinematics for a 3-2-1 Euler angle sequence.
-    """
-    w = np.array([np.sin(0.1*time), 0.01, np.cos(0.1*time)]) * np.deg2rad(5)
-
-    dot_angles = np.dot( (1/cos(theta[1]) * np.array([
-                [cos(theta[1]), sin(theta[0])*sin(theta[1]), cos(theta[0])*sin(theta[1])],
-                [0,           cos(theta[0])*cos(theta[1]), -sin(theta[0])*cos(theta[1])],
-                [0,           sin(theta[0]),             cos(theta[0])] 
-                ])), w)
-    return dot_angles
 
 #%% Solve kinematic differential equation in matrix form
-sol = solve_ivp(diff_kinem_321_Euler, [0,60], theta, t_eval=time)
-
-time_sol = sol.t
-dot_angles = np.rad2deg(sol.y)
+time_sol, dot_angles = adcs.solve_KDE(theta, time_range=[0, 60], time_array=time, solver='E')
+dot_angles = np.rad2deg(dot_angles)
 
 #%% Plot the results
 plt.figure(figsize=(10,5))

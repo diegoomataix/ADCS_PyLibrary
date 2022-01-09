@@ -64,15 +64,17 @@ def DCM_A_B(A, B):
     return np.dot(A.T, B)
     
 ################################################################################
-def DCM_321(Eul_ang):
-    """
-    Direction cosine matrix for the  3-2-1 Euler angles
-    """
-    return np.array([[cos(Eul_ang[1])*cos(Eul_ang[2]), cos(Eul_ang[1])*sin(Eul_ang[2]), -sin(Eul_ang[1])],
-                     [sin(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) - cos(Eul_ang[0])*sin(Eul_ang[2]), sin(Eul_ang[0])
-                      * sin(Eul_ang[1])*sin(Eul_ang[2]) + cos(Eul_ang[0])*cos(Eul_ang[2]), sin(Eul_ang[0])*cos(Eul_ang[1])],
-                     [cos(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) + sin(Eul_ang[0])*sin(Eul_ang[2]), cos(Eul_ang[0])*sin(Eul_ang[1])*sin(Eul_ang[2]) - sin(Eul_ang[0])*cos(Eul_ang[2]), cos(Eul_ang[0])*cos(Eul_ang[1])]])
-
+#def DCM_321(Eul_ang): !!!! This is wrong. It was wrong in the solutions
+# INSTEAD USE DCM() in symbolic library with 'num' set as mode to get DCM for all 
+# rotations
+#    """
+#    Direction cosine matrix for the  3-2-1 Euler angles
+#    """
+#    return np.array([[cos(Eul_ang[1])*cos(Eul_ang[2]), cos(Eul_ang[1])*sin(Eul_ang[2]), -sin(Eul_ang[1])],
+#                     [sin(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) - cos(Eul_ang[0])*sin(Eul_ang[2]), sin(Eul_ang[0])
+#                      * sin(Eul_ang[1])*sin(Eul_ang[2]) + cos(Eul_ang[0])*cos(Eul_ang[2]), sin(Eul_ang[0])*cos(Eul_ang[1])],
+#                     [cos(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) + sin(Eul_ang[0])*sin(Eul_ang[2]), cos(Eul_ang[0])*sin(Eul_ang[1])*sin(Eul_ang[2]) - sin(Eul_ang[0])*cos(Eul_ang[2]), cos(Eul_ang[0])*cos(Eul_ang[1])]])
+#
 ################################################################################
 def Eul_ang(DCM):
     """
@@ -368,20 +370,20 @@ def QUEST(b, RF, weights=None):
 
 ################################################################################
 # Solve Kinematic Differential Equation
-def solve_KDE(input, time_range=[0, 60], time_array=np.linspace(0, 60, 244), solver='E'):
+def solve_KDE(input, time_range=[0, 60], time_array=np.linspace(0, 60, 244), solver='E321'):
     """
     Solve the Kinematic Differential Equation
     Input:
         input: Input data (quaternion or Euler angles)
         time_range: Time range i.e. [0,60]
         time_array: Time array i.e. time = np.linspace(0, 60, 244)
-        solver: Solver: either "q" for quaternion or "E" for Euler angles
+        solver: Solver: either "q" for quaternion or "E" for Euler angles, "E321" for Euler angles in 321 convention
     Output:
         output: Output data (solution time, solution_data)
     """
     from scipy.integrate import solve_ivp
 
-    if solver=='E':
+    if solver=='E321':
         sol = solve_ivp(diff_kinem_321_Euler, [0, 60], input, t_eval=time_array)
     elif solver=='q':
         sol = solve_ivp(diff_kinem_Quaternion, [

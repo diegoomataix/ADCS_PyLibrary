@@ -1,6 +1,7 @@
 #%% This file contains a series of functions to be used for attitude determination and control
 
 #%% Import libraries
+import numpy as np
 from sympy.physics.mechanics import ReferenceFrame, dot, cross
 from sympy import *
 init_printing(use_latex='mathjax')
@@ -111,4 +112,63 @@ def C3(angle=symbols("theta_3")):
         [0,    0, 1]])
     return Rz.subs(z, angle)
 
+################################################################################
+def DCM(mode, rot3, rot2=None, rot1=None, Eul_ang=None):
+    """
+    Function to calculate the rotation matrix from the 3 angles of the Euler angles.
+    Input:
+        mode: 'sim' or 'num' <- sim for symbolic, num for numerical
+        rot1, rot2, rot3: Rotation angles
+        Eul_ang: Euler angles. 
+            ! Note the angles should in be in the order: theta3, theta2, theta1, where:
+            theta3 -> rotation along the z axis
+            theta2 -> rotation along the y axis
+            theta1 -> rotation along the x axis
+    Output:
+        R: Rotation matrix
 
+    Example use: get_R_matrix('num', 3, 2, 1, np.array([-15, 25, 10]))
+    """
+    x, y, z = symbols('x y z')
+    if rot3 == 1:
+        R3 = C1(x)
+    elif rot3 == 2:
+        R3 = C2(x)
+    elif rot3 == 3:
+        R3 = C3(x)
+
+    if rot2 == 1:
+        R2 = C1(y)
+    elif rot2 == 2:
+        R2 = C2(y)
+    elif rot2 == 3:
+        R2 = C3(y)
+
+    if rot1 == 1:
+        R1 = C1(z)
+    elif rot1 == 2:
+        R1 = C2(z)
+    elif rot1 == 3:
+        R1 = C3(z)
+
+    if rot2 == None:
+        R2 = 1
+    if rot1 == None:
+        R1 = 1
+
+    R = R1 * R2 * R3
+   
+    if mode == 'num':
+        if rot2 != None and rot1 == None:
+            R = R.subs(z, Eul_ang[0])
+            R = R.subs(y, Eul_ang[1])
+        if rot2 == None and rot1 == None:
+            R = R.subs(z, Eul_ang[0])
+
+        R = R.subs(x, Eul_ang[0])
+        if rot2 != None:
+            R = R.subs(y, Eul_ang[1])
+        if rot1 != None:
+            R = R.subs(z, Eul_ang[2])
+        R = np.array(R).astype(np.float64)
+    return R

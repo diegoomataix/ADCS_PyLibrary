@@ -21,9 +21,6 @@ def skew(v):
                      [-v[1], v[0], 0]])
 
 # The rotation matrix for a given principle Euler eigenaxis rotation is given by:
-#def C(e,phi):
-#    C = cos(phi) * np.eye(3) + np.dot((1-cos(phi)), (e.T*e)) - sin(phi)*skew(e)
-#    return C
 C = adcs.Eigenaxis_rotMAT(e, phi)
 print(C)
 

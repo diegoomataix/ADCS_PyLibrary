@@ -7,6 +7,7 @@ from sys import path
 path.append(
     "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
 import ADCS_Functions as adcs
+import ADCS_Functions_sym as adcs_sym
 
 #%% Data and functions
 # Let the orientations of two spacecraft A and B relative to an inertial frame I 
@@ -15,13 +16,11 @@ theta_A = np.deg2rad(np.array([60, -45, 30]).T)
 theta_B = np.deg2rad(np.array([-15, 25, 10]).T)
 
 # Direction cosine matrix for 3-2-1 Euler angles
-def DCM_321(Eul_ang): 
-    return np.array([[cos(Eul_ang[1])*cos(Eul_ang[2]), cos(Eul_ang[1])*sin(Eul_ang[2]), -sin(Eul_ang[1])],
-                [sin(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) - cos(Eul_ang[0])*sin(Eul_ang[2]), sin(Eul_ang[0])*sin(Eul_ang[1])*sin(Eul_ang[2]) + cos(Eul_ang[0])*cos(Eul_ang[2]), sin(Eul_ang[0])*cos(Eul_ang[1])],
-                [cos(Eul_ang[0])*sin(Eul_ang[1])*cos(Eul_ang[2]) + sin(Eul_ang[0])*sin(Eul_ang[2]), cos(Eul_ang[0])*sin(Eul_ang[1])*sin(Eul_ang[2]) - sin(Eul_ang[0])*cos(Eul_ang[2]), cos(Eul_ang[0])*cos(Eul_ang[1])]])
 #%% Orientation matrices CAI and CBI
-C_AI = DCM_321(theta_A)
-C_BI = DCM_321(theta_B)
+#C_AI = adcs.DCM_321(theta_A)
+#C_BI = adcs.DCM_321(theta_B)
+C_AI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=np.flip(theta_A)) # I use the flip function because in the solutions it considers that the given angles are in the opposite order
+C_BI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=np.flip(theta_B))
 
 #%% Direction cosine matrix CAB
 C_AB = np.dot(C_AI, np.linalg.inv(C_BI))

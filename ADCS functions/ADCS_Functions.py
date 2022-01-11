@@ -392,3 +392,21 @@ def solve_KDE(input, time_range=[0, 60], time_array=np.linspace(0, 60, 244), sol
         print('Solver not found')
     
     return sol.t, sol.y
+
+
+################################################################################
+################################################################################
+#%% Attitude Dynamics
+################################################################################
+def axisym_torquefree(I, w):
+    """
+    This function calculates the axisymatic angular momentum, nutation angle and precession rate.
+    Assumptions: axisymatic body, torque-free motion
+    """
+    IT = (I[0] + I[1])/2  # Since it is axisymmetric it is equal to  = Ix  = Iy
+    h = I*w
+    hT = np.linalg.norm(np.array([h[0], h[1]]))
+    h_mag = np.linalg.norm(h)
+    gamma = np.arcsin(hT/h_mag)
+    Omega_p = h_mag / IT
+    return h, hT, h_mag, gamma, Omega_p

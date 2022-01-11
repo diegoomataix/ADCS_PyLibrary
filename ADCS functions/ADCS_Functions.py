@@ -42,9 +42,9 @@ def print_matrix(array, decimals=3):
     display(Math(r'\begin{bmatrix}'+matrix+r'\end{bmatrix}'))
 
 ################################################################################
-def find_eig_3x3(J):
+def find_eig(J):
     """
-    A function to find the eigenvalues and eigenvectors of a 3x3 matrix.
+    A function to find the eigenvalues and eigenvectors of a matrix.
     """
     Eigen = np.linalg.eigh(
         J)  # Other methods include la.eig (import scipy.linalg as la) or np.linalg.eig, but give a different order for eigenvectors
@@ -306,7 +306,7 @@ def q_method(b, RF, weights=None):
     K[3, 0:3] = k12.T
     K[3, 3] = k22
 
-    Eigenvalues, Eigenvectors = find_eig_3x3(K)
+    Eigenvalues, Eigenvectors = find_eig(K)
     max_Eigenvalue = np.max(Eigenvalues)
     max_Eigenvector = Eigenvectors[:, np.where(
         Eigenvalues == np.max(Eigenvalues))]
@@ -355,7 +355,7 @@ def QUEST(b, RF, weights=None):
     K[3, 0:3] = k12.T
     K[3, 3] = k22
 
-    Eigenvalues, _ = find_eig_3x3(K)
+    Eigenvalues, _ = find_eig(K)
     max_Eigenvalue = np.max(Eigenvalues)
 
     p = np.dot(np.linalg.inv(

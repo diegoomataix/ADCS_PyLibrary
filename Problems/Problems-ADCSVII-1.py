@@ -29,12 +29,12 @@ ns_eci = np.array([0, 1, 0]).T
 #CbG = np.array([[cos(pi/4), sin(pi/4), 0],
 #                [-sin(pi/4), cos(pi/4), 0],
 #                [0, 0, 1]])
-CbG = np.array(adcs_sym.C3().subs("theta_3", np.pi/4)).astype(np.float64)
-print('rotation matrix CbG = ', CbG)
+#CbG = np.array(adcs_sym.C3().subs("theta_3", np.pi/4)).astype(np.float64)
+#print('rotation matrix CbG = ', CbG)
 
 # or using the library
-C = adcs_sym.DCM('num', 3, Eul_ang=np.array([np.pi/4]))
-print('rotation matrix CbG = ', C)
+CbG = adcs_sym.DCM('num', 3, Eul_ang=np.array([np.pi/4]))
+print('rotation matrix CbG = ', CbG)
 #%% 2) Determine the coordinates of Earth and Sun vectors ne and ns respectively, in the spacecraft body frame.
 
 # Calculate body coordinates

@@ -172,3 +172,31 @@ def DCM(mode, rot3, rot2=None, rot1=None, Eul_ang=None):
             R = R.subs(z, Eul_ang[2])
         R = np.array(R).astype(np.float64)
     return R
+
+################################################################################
+#%% Rigid Body Dynamics Functions:
+################################################################################
+
+def char_poly(J):
+    """
+    Inputs a matrix in sympy form.
+    Finds the characteristic polynomial of a matrix in sympy form.
+    Takes the coefficients of the polynomial as a numpy array and Outputs the roots of the polynomial.
+    NOTE: TBH I could also just use the find_eigen function or just numpy... But this way I get the characteristic polynomial.
+    """
+    # J.charpoly() gives the characteristic polynomial of J. Can also write as J.charpoly().as_expr() to just get the poly equation
+    char_eq = J.charpoly()
+    coef = np.array(char_eq.all_coeffs())
+    return J.charpoly().as_expr(), np.roots(coef)
+
+################################################################################
+def find_eigen(J):
+    """
+    Input: a matrix in sympy form.
+    Output: the eigenvalues and eigenvectors of a matrix in sympy form as numpy arrays
+    """
+    # J.eigenvects() gives the eigenvectors of J. Can also write as J.eigenvects().as_expr() to just get the eigenvectors
+    Eigen = np.linalg.eigh(np.array(J, dtype='float'))
+    Eigenvalues = Eigen[0]
+    Eigenvectors = Eigen[1]
+    return Eigenvalues, Eigenvectors

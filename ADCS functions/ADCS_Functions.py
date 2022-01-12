@@ -88,6 +88,8 @@ def Eul_ang(DCM):
 def diff_kinem_321_Euler(time, theta):
     """
     Differential kinematics for a 3-2-1 Euler angle sequence.
+    - Needs to be edited with the correct angular velocity vector for the user's 
+      specific use case.
     """
     w = np.array([np.sin(0.1*time), 0.01, np.cos(0.1*time)]) * np.deg2rad(5)
 
@@ -100,6 +102,54 @@ def diff_kinem_321_Euler(time, theta):
     ])), w)
     return dot_angles
 
+################################################################################
+def plot_euler_angle_rates(time, dot_angles):
+    plt.figure(figsize=(10, 5))
+
+    plt.subplot(1, 2, 1)
+    plt.plot(time, dot_angles[0, :], label='yaw')
+    plt.plot(time, dot_angles[1, :], label='pitch')
+    plt.plot(time, dot_angles[2, :], label='roll')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Angle (deg)')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    with plt.style.context('seaborn-notebook'):
+        fig = plt.figure(figsize=(10, 5))
+        plt.subplot(311)
+        plt.plot(time, dot_angles[0, :], label='yaw')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Angle (deg)')
+        plt.grid()
+        plt.xlabel('Time (s)')
+        plt.ylabel('Yaw Angle (deg)')
+        plt.xlim(0, max(time))
+        plt.ylim(min(dot_angles[0, :])*1.1, max(dot_angles[0, :])*1.1)
+
+        plt.subplot(312)
+        plt.plot(time, dot_angles[1, :], label='pitch', color='r')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Angle (deg)')
+        plt.grid()
+        plt.xlabel('Time (s)')
+        plt.ylabel('Pitch Angle (deg)')
+        plt.xlim(0, max(time))
+        plt.ylim(min(dot_angles[1, :])*1.1, max(dot_angles[1, :])*1.1)
+
+        plt.subplot(313)
+        plt.plot(time, dot_angles[2, :], label='roll', color='g')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Angle (deg)')
+        plt.grid()
+        plt.xlabel('Time (s)')
+        plt.ylabel('Roll Angle (deg)')
+        plt.xlim(0, max(time))
+        plt.ylim(min(dot_angles[2, :])*1.1, max(dot_angles[2, :])*1.1)
+
+        fig.tight_layout()
+        plt.show()
 ################################################################################
 ################################################################################
 #%% Quaternions
@@ -156,6 +206,16 @@ def DCM_to_Quaternion(C):
     return q#/np.linalg.norm(q)
 
 ################################################################################
+def Eigenaxis_to_Quaternion(e, phi):
+    """
+    Eigenaxis to Quaternion
+    """
+    q = np.zeros(4)
+    q[3] = cos(phi/2)
+    q[0:3] = np.array([e[0], e[1], e[2]]) * sin(phi/2)
+    return q#/np.linalg.norm(q)
+
+################################################################################
 def Quaternion_to_DCM(q):
     """
     Quaternion to DCM
@@ -179,8 +239,11 @@ def Quaternion_to_DCM(q):
 def diff_kinem_Quaternion(time, q):
     """
     Differential kinematics for quaternion.
+    - Needs to be edited with the correct angular velocity vector for the user's 
+      specific use case.
     """
-    w = np.array([np.sin(0.1*time), 0.01, np.cos(0.1*time), 0]) * np.deg2rad(50)
+    w = np.array(
+            [np.sin(0.1*time), 0.01, np.cos(0.1*time), 0]) * np.deg2rad(50)
 
     dot_q = np.dot( (1/2) * np.array([
                 [0,     w[2], -w[1], w[0]],
@@ -377,22 +440,83 @@ def solve_KDE(input, time_range=[0, 60], time_array=np.linspace(0, 60, 244), sol
         input: Input data (quaternion or Euler angles)
         time_range: Time range i.e. [0,60]
         time_array: Time array i.e. time = np.linspace(0, 60, 244)
-        solver: Solver: either "q" for quaternion or "E" for Euler angles, "E321" for Euler angles in 321 convention
+        solver: Solver: either "q" for quaternion or "E321" for Euler angles in 321 convention,
+                ATM the solver is limited for just 321 Euler sequence, for a different sequence
+                use the function solve_KDE_Euler()
     Output:
         output: Output data (solution time, solution_data)
+    Note (!):
+        w: angular velocity (3x1 vector). Needs to be edited in the diff_kimen function 
+           with the correct angular velocity vector for the user's 
+           specific use case.
     """
     from scipy.integrate import solve_ivp
 
     if solver=='E321':
-        sol = solve_ivp(diff_kinem_321_Euler, [0, 60], input, t_eval=time_array)
+        sol = solve_ivp(diff_kinem_321_Euler, time_range,
+                        input, t_eval=time_array)
+    #elif solver=='E':
+    #    sol = solve_ivp(diff_kinem_Euler, time_range, 
+    #                    input, t_eval=time_array)
     elif solver=='q':
-        sol = solve_ivp(diff_kinem_Quaternion, [
-                        0, 60], input, t_eval=time_array)
+        sol = solve_ivp(diff_kinem_Quaternion, time_range, 
+                        input, t_eval=time_array)
     else:
         print('Solver not found')
     
     return sol.t, sol.y
 
+################################################################################
+def solve_Euler_KDE(t, theta_angles, rot1, rot2, rot3, w=None, invorder=True, plot=True):
+    """
+    Differential kinematics for any Euler angle sequence.
+
+    Input:
+    - t: time. i.e. t = np.linspace(0, 60, 61)
+    - theta_angles: Euler angles.  i.e. thetanum = np.deg2rad([80, 30, 40])
+    - rot1, rot2, rot3: rotation sequence. Same convention as in diff_kinem_Euler_theta_matrix
+    - w: Angular velocity vector as a sympy Matrix. i.e. Matrix([w1, w2, w3])
+    - invorder: If True, the order of the rotation sequence is inverted.
+                i.e. invorder=True:
+                theta1 -> rotation along the 3rd rotation axis 
+                theta2 -> rotation along the 2nd rotation axis 
+                theta3 -> rotation along the 1st rotation axis 
+    (!) Note: Need to review the solver. It is not working properly.
+    """
+    ## Import symbolic library
+    from sys import path
+    path.append(
+        "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+    import ADCS_Functions_sym as adcs_sym
+    import sympy as sym
+
+    # Get the symbolic solution to the differential kinematic equation:
+    sol= adcs_sym.diff_kinem_Euler(
+        rot1, rot2, rot3, w=w, invorder=invorder)
+
+    # Get the symbols needed back
+    time, x, y, z = sym.symbols('t theta_1 theta_2 theta_3')
+    dotx, doty, dotz = sym.symbols(r"\dot{\theta_1} \dot{\theta_2} \dot{\theta_3}")
+
+    # Get the numerical solution to the differential kinematic equation:
+    dotx = sol[dotx].subs(x, theta_angles[0]).subs(
+        y, theta_angles[1]).subs(z, theta_angles[2])
+    doty = sol[doty].subs(x, theta_angles[0]).subs(
+        y, theta_angles[1]).subs(z, theta_angles[2])
+    dotz = sol[dotz].subs(x, theta_angles[0]).subs(
+        y, theta_angles[1]).subs(z, theta_angles[2])
+
+    dot_angles = sym.Matrix([dotx, doty, dotz])
+
+    dot_angles_num = np.zeros((3, len(t)))
+    for i in range(len(t)):
+        dot_angles_num[0, i] = dot_angles[0].subs(time, t[i])
+        dot_angles_num[1, i] = dot_angles[1].subs(time, t[i])
+        dot_angles_num[2, i] = dot_angles[2].subs(time, t[i])
+
+    if plot==True:
+        plot_euler_angle_rates(t, np.rad2deg(dot_angles_num))
+    return dot_angles_num
 
 ################################################################################
 ################################################################################

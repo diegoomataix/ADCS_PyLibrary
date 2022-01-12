@@ -19,8 +19,9 @@ theta_B = np.deg2rad(np.array([-15, 25, 10]).T)
 #%% Orientation matrices CAI and CBI
 #C_AI = adcs.DCM_321(theta_A)
 #C_BI = adcs.DCM_321(theta_B)
-C_AI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=np.flip(theta_A)) # I use the flip function because in the solutions it considers that the given angles are in the opposite order
-C_BI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=np.flip(theta_B))
+
+C_AI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=theta_A, invorder=True)
+C_BI = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=theta_B, invorder=True)
 
 #%% Direction cosine matrix CAB
 C_AB = np.dot(C_AI, np.linalg.inv(C_BI))

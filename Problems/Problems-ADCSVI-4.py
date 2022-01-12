@@ -19,7 +19,7 @@ Eul_ang = np.radians(Eul_ang)
 
 # Use the direction cosine matrix for the  3-2-1 Euler angles
 # Note! can also use: THIS WORKS FOR ALL TYPES OF SEQUENCES
-C21 = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=Eul_ang)
+C21 = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=Eul_ang, invorder=True)
 print('DCM 321 is:', C21); print('\n')
 
 
@@ -37,6 +37,8 @@ print(np.allclose(C21@e, e))
 #%% Find the corresponding Euler parameters = Quaternions
 q = adcs.DCM_to_Quaternion(C21)
 print(q)
-
+## Check that it is teh same using eigenaxis and eigenaxis rotation angle
+qq = adcs.Eigenaxis_to_Quaternion(e, phi)
+print(qq)
 #%% Is the quaternion q a unit quaternion?
 print(np.allclose(q, q/np.linalg.norm(q)))

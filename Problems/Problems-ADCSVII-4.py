@@ -30,7 +30,7 @@ time = np.linspace(0, 60, 244)
 ## 1) Translate from Euler angles, theta, to quaternions, q
 # Compute the corresponding rotation matrix from the 3-2-1 Euler angles
 #C = adcs.DCM_321(theta)
-C = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=np.flip(theta)) # I use the flip function because in the solutions it considers that the given angles are in the opposite order
+C = adcs_sym.DCM('num', 3, 2, 1, Eul_ang=theta, invorder=True) # I use the flip function because in the solutions it considers that the given angles are in the opposite order
 print("The corresponding rotation matrix is =", C)
 
 # Find the corresponding Euler parameters = Quaternions

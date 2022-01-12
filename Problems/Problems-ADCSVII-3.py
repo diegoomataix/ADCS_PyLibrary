@@ -26,7 +26,10 @@ theta = np.deg2rad([80, 30, 40])
 time = np.linspace(0, 60, 61)
 
 #%% Solve kinematic differential equation in matrix form
-time_sol, dot_angles = adcs.solve_KDE(theta, time_range=[0, 60], time_array=time, solver='E321')
+#time_sol, dot_angles = adcs.solve_KDE(theta, time_range=[0, 60], time_array=time, solver='E321')
+
+time_sol, dot_angles = adcs.solve_KDE(
+                        theta, time_range=[0, 60], time_array=time, solver='E321')
 dot_angles = np.rad2deg(dot_angles)
 
 #%% Plot the results

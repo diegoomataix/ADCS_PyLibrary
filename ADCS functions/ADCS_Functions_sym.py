@@ -316,6 +316,9 @@ def diff_kinem_Euler(rot1, rot2, rot3, w=None, invorder=True):
 
     (!) Note: Need to review the solver. It is not working properly.
     """
+    ## Required library
+    from sympy.solvers.ode.systems import dsolve_system
+
     ## Angular velocity vector
     time = Symbol('t')
     if w ==None:
@@ -329,8 +332,19 @@ def diff_kinem_Euler(rot1, rot2, rot3, w=None, invorder=True):
     dot_angles = Matrix([dotx, doty, dotz])
 
     ## Differential Equation
-    eq = dot_angles - np.dot(thetas, w)
-    sol = solve(eq, dot_angles)
+    from sympy.physics.vector import dynamicsymbols
+    xt, yt, zt = dynamicsymbols("theta_1 theta_2 theta_3")
+    thetanum = np.deg2rad([80, 30, 40])
+
+    eq1 = Eq(diff(xt, time), (thetas @ w)[0])
+    eq2 = Eq(diff(yt, time), (thetas @ w)[1])
+    eq3 = Eq(diff(zt, time), (thetas @ w)[2])
+
+    eqs = Matrix([eq1, eq2, eq3])
+
+    ## Solve the differential equation
+    sol = dsolve_system(eqs, t=time, ics={xt: thetanum[0], yt: thetanum[1], zt: thetanum[2]})
+    sol = Matrix(sol[0])
     return sol
 ################################################################################
 #%% Rigid Body Dynamics Functions:
@@ -359,3 +373,13 @@ def find_eigen(J):
     Eigenvalues = Eigen[0]
     Eigenvectors = Eigen[1]
     return Eigenvalues, Eigenvectors
+
+################################################################################
+def Inertia_cylinder():
+    m = Symbol('m', positive=True, real=True)
+    r = Symbol('r', positive=True, real=True)
+    h = Symbol('h', positive=True, real=True)
+    I1 = 1/12 * m * (3*r**2 + h**2)
+    I2 = I1
+    I3 = 1/2 * m * r**2
+    return I1, I2, I3

@@ -667,3 +667,71 @@ def solve_attitude_kimenatics_321(ics, I1, I2, I3, time_range=[0, 100], time_arr
         plot_euler(time, theta)
 
     return time, omega, theta
+
+################################################################################
+def stability_analysis(time, x, w, I1, I2, I3):
+    """
+    Stability analysis of attitude motion  (three coupled linear differential equations).
+
+    In matrix form x'' = A x' + B x
+
+    For stability I2>I1>I3
+    """
+    ## Variables
+    theta = np.array([x[0], x[1], x[2]])
+    dottheta = np.array([x[3], x[4], x[5]])
+
+    ## Initialize
+    A = np.array([[0, 0, ((I1-I2+I3)*w)/I1],
+                  [0, 0, 0], 
+                  [((I1-I2+I3)*w)/I3, 0, 0]])
+    dotx_arr = np.array([dottheta[0], dottheta[1], dottheta[2]])
+
+    B = np.array([[(4*w**2*(I2-I3))/I1, 0, 0],
+                  [0, -(3*w**2*(I1-I3))/I2, 0], 
+                  [0, 0, (w**2*(I2-I1))/I3]])
+    theta_arr = np.array([theta[0], theta[1], theta[2]])
+
+
+    ## Diff equations
+    dotdot_theta1 = A @ dotx_arr + B @ theta_arr
+
+    sols = np.concatenate((dotdot_theta1, dotx_arr), axis=None)
+    return sols
+
+################################################################################
+def solve_stability_analysis(ics, w, I1, I2, I3, time_range=[0, 100], time_array=np.linspace(0, 100, 101), plot=True):
+    """
+    Solve the attitude kinematics for a 3-2-1 Euler angle sequence.
+
+    Inputs:
+    - ics: initial conditions. i.e. np.concatenate([wIC, thetaIC])
+    - w: angular velocity of the body
+    - I1, I2, I3: inertia tensor elements
+    - time_range: time vector. i.e. [0, 100]
+    - time_array: time array. i.e. np.linspace(0, 100, 101)
+    - plot: boolean. If True, plot the results.
+    """
+    from scipy.integrate import solve_ivp
+
+    ## Check if stable
+    if I2 > I1 > I3:
+        print("Stable")
+    else:
+        print("Unstable")
+
+    ## Solve
+    sol = solve_ivp(stability_analysis, time_range, ics,
+                    t_eval=time_array, method='RK45', args=(w, I1, I2, I3))
+
+    ## Get values
+    time = sol.t
+    dottheta = sol.y[0:3, :]
+    theta = sol.y[3:6, :]
+
+    if plot == True:
+        plot_euler(time, dottheta, ylabel='$\dot{\omega}$', ylabel1='$\\dot{\omega_1}$',
+                        ylabel2='$\dot{\omega_2}$', ylabel3='$\dot{\omega_3}$')
+        plot_euler(time, theta)
+
+    return time, theta, dottheta

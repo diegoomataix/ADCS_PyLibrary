@@ -444,12 +444,13 @@ def eq_torquefree_motion(a):
 #%% Active Attitude Control Functions:
 ################################################################################
 
-def close_loop_TF(form='freq'):
+def close_loop_TF(form='freq', subs=False, Kd=None, Kp=None, I=None, xi=None, omega_n=None):
     """"
     Input:
         - form: string with the form of the loop
                 "gains" -> outputs the TF with Kp, Kd, I as cosntants
                 "freq" -> outputs the TF with w_n, xi  as constants
+        - subs: boolean to substitute the constants in the TF
     Output:
         - TF(tf): transfer function for a close-loop system with PD control
     """
@@ -469,10 +470,17 @@ def close_loop_TF(form='freq'):
         raise ValueError("form must be 'gains' or 'freq'")
 
     TF = TF_num / TF_den
+
+    if subs is True and form == "gains" and Kd is not None and Kp is not None and I is not None and xi is None and omega_n is None:
+        TF = TF.subs(Symbol('K_p'), Kp).subs(
+            Symbol('K_d'), Kd).subs(Symbol('I'), I).simplify()
+    elif subs is True and form == "freq" and Kd is None and Kp is None and I is None and xi is not None and omega_n is not None:
+        TF = TF.subs(xi_sym, xi).subs(omega_n_sym, omega_n).simplify()
+
     return TF
     
 ################################################################################
-def max_overshoot_CLTF(known_real_part='y'):
+def max_overshoot_CLTF(known_real_part='y', subs=False, xi=None, xiomega_n=None):
     """
     Maximum overshoot for a close-loop system with PD control.
 
@@ -487,16 +495,23 @@ def max_overshoot_CLTF(known_real_part='y'):
     if known_real_part == 'y':
         xiomega_n_sym = xi_sym*omega_nsym
         Mp = exp(-pi*xiomega_n_sym/omega_dsym)
+        if subs is True and xiomega_n is not None:
+            Mp = Mp.subs(xiomega_n_sym, xiomega_n).subs(pi, np.pi).simplify()
+
     elif known_real_part == 'n':
         Mp = exp(-pi*xi_sym/(1-xi_sym**2) ** 0.5)
+        if subs is True and xi is not None:
+            Mp = Mp.subs(Symbol('xi'), xi).subs(pi, np.pi).simplify()
     else:
         raise ValueError('known_real_part must be "y" or "n"')
+
+    
     return Mp
 
 ################################################################################
-def syms2tf(TF_sym):
+def syms2tf(TF_sym, plot=True):
     """
-    Get transfer function from equation. Plot pzmap, rlocus, stepresponse
+    Get transfer function from equation. Plot pzmap, rlocus, stepresponse, impulseresponse.
     Input:
      - eq(sym): symbolic equation
     Output
@@ -515,14 +530,20 @@ def syms2tf(TF_sym):
 
     TF = ctl.tf(TFnum, TFden)
 
-    ctl.pzmap(TF, plot=True, grid=True)
-    plt.show()
+    poles, zeros = ctl.pzmap(TF, plot=True, grid=True)
 
-    ctl.rlocus(TF)
-    plt.show()
+    if plot is True:
+        plt.show()
 
-    T, yout = ctl.step_response(TF)  # , T=np.linspace(0, 5, 100))
-    plt.plot(T, yout)
-    plt.show()
+        ctl.rlocus(TF)
+        plt.show()
 
-    return TF
+        T, yout = ctl.step_response(TF)  # , T=np.linspace(0, 5, 100))
+        plt.plot(T, yout)
+        plt.show()
+
+        T, yout = ctl.impulse_response(TF)
+        plt.plot(T, yout)
+        plt.show()
+
+    return TF, poles, zeros

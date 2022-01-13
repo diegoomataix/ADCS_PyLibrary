@@ -836,3 +836,15 @@ def PD_coefs_CL(I, poles=None, xiomega_n=None, xi=None, omega_n=None):
 
     Kd = 2*I*xiomega_n
     return Kp, Kd
+
+################################################################################
+def rise_time_CLTF(xi, omega_d):
+    """"
+    Determine the rise time for a closed loop system with a given xi and omega_d
+
+    Input:
+    - xi: damping ratio
+    - omega_d: damped frequency
+    """
+    beta = np.arctan(np.sqrt(1-xi**2)/xi)
+    return (np.pi-beta)/omega_d

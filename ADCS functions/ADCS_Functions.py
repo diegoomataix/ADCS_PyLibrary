@@ -671,7 +671,9 @@ def solve_attitude_kimenatics_321(ics, I1, I2, I3, time_range=[0, 100], time_arr
 ################################################################################
 def stability_analysis(time, x, w, I1, I2, I3):
     """
-    Stability analysis of attitude motion  (three coupled linear differential equations).
+    Stability analysis of attitude motion for gravity gradient stabilization. 
+    
+    (Three coupled linear differential equations).
 
     In matrix form x'' = A x' + B x
 
@@ -702,7 +704,7 @@ def stability_analysis(time, x, w, I1, I2, I3):
 ################################################################################
 def solve_stability_analysis(ics, w, I1, I2, I3, time_range=[0, 100], time_array=np.linspace(0, 100, 101), plot=True):
     """
-    Solve the attitude kinematics for a 3-2-1 Euler angle sequence.
+    Solve the stability analysis for gravity gradient stabilization.
 
     Inputs:
     - ics: initial conditions. i.e. np.concatenate([wIC, thetaIC])
@@ -735,3 +737,102 @@ def solve_stability_analysis(ics, w, I1, I2, I3, time_range=[0, 100], time_array
         plot_euler(time, theta)
 
     return time, theta, dottheta
+
+################################################################################
+#%% Active Attitude Control Functions:
+################################################################################
+def xiomega_n_f(ts):
+    """
+    Use for closed-loop system only.
+
+    Returns the product of the undamped natural frequency (omega_n) and the damping ratio (xi).
+    Calculated from settling time formula (page 52 of ADCSX.pdf)
+    """
+    xi_omega_n = 4.4/ts
+    
+    return xi_omega_n
+
+################################################################################
+def close_loop_TF_solve(ts, Mp, wn):
+    """"
+    Solve for the TF constants for a closed loop system with PD control.
+    Inputs:
+        - ts: sampling time
+        - Mp: maximum overshoot
+    Outputs:
+        - returns the TF and the constants:
+        - the product of the undamped natural frequency (omega_n) and the damping ratio (xi)
+        - the damped natural frequency (omega_d)
+        - TF(tf): transfer function for a close-loop system with PD control
+    """
+    ## Import symbolic library
+    from sys import path
+    path.append(
+        "c:\\Users\\diego\\Dropbox\\Academic\\MEng Space Systems\\3. DOCA\\ADCS functions")
+    import ADCS_Functions_sym as adcs_sym
+    import sympy as sym
+
+    xiomega_n = xiomega_n_f(ts)
+    omega_d = sym.solve(sym.Eq(adcs_sym.max_overshoot_CLTF(), Mp),
+                        sym.Symbol('omega_d'))[0].subs(sym.Symbol('xi')*sym.Symbol('omega_n'), xiomega_n)
+    TF = adcs_sym.close_loop_TF()
+    TF = TF.subs(sym.Symbol('\omega_n')*sym.Symbol('xi'), xiomega_n).subs(sym.Symbol('\omega_d'),
+                                                                  omega_d).subs(sym.Symbol('\omega_n'), wn)
+    return xiomega_n, omega_d, TF
+
+################################################################################
+def closed_loop_poles(xiomega_n, omega_d, plot=True):
+    """
+    Returns the poles of a closed-loop system.
+
+    Input:
+     - xiomega_n: product of the undamped natural frequency (omega) and the damping ratio (xi).
+     - omega_d: damped frequency of the system.
+    """
+    s = - xiomega_n + omega_d*1j
+    s_conj = s.conjugate()
+
+    poles = np.array([s, s_conj]).astype(complex)
+
+    if plot is True:
+        poles_re = [ele.real for ele in poles]
+        # extract imaginary part
+        poles_im = [ele.imag for ele in poles]
+#
+        # plot the complex numbers
+        plt.scatter(poles_re, poles_im, marker='x', color='red')
+        plt.axhline(0, color='k')  # x = 0
+        plt.axvline(0, color='k')  # y = 0
+        plt.title('s-plane')
+        plt.ylabel('j')
+        plt.xlabel('$\sigma$')
+        plt.grid()
+        plt.show()
+
+    return poles
+
+################################################################################
+def PD_coefs_CL(I, poles=None, xiomega_n=None, xi=None, omega_n=None):
+    """
+    Returns the PD coefficients for the closed-loop system.
+    Input:
+        I: inertia, then:
+        (Option 1):
+            poles: list of poles
+            xiomega_n: product of natural frequency and damping ratio
+        (Option 2):
+            xi: damping ratio
+            omega_n: natural frequency
+    Output:
+        Kp: proportional gain
+        Kd: derivative gain
+    """
+    if poles is not None and xiomega_n is not None and xi is None and omega_n is None:
+        Kp = I * abs(poles[0])**2
+    elif poles is None and xiomega_n is None and xi is not None and omega_n is not None:
+        Kp = I * omega_n**2
+    else:
+        raise ValueError('Invalid input')
+
+    Kd = 2*I*xiomega_n
+    return Kp, Kd

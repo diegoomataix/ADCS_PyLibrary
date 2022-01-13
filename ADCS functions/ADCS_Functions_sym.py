@@ -18,7 +18,7 @@ class IJKReferenceFrame(ReferenceFrame):
 ################################################################################
 #%% Basic functions
 ################################################################################
-def sim2num(sim_vec, simsubs, numsubs, simsubs2=None, numsubs2=None, simsubs3=None, numsubs3=None):
+def sym2num(sim_vec, simsubs, numsubs, simsubs2=None, numsubs2=None, simsubs3=None, numsubs3=None):
     """
     Function to convert a symbolic vector to a numerical vector (numpy array)
     """
@@ -438,3 +438,91 @@ def eq_torquefree_motion(a):
         omega_vecsym.cross(I_vecsym * omega_vecsym + a_vecsym*hs_sym)
 
     return T_vecsym
+
+
+################################################################################
+#%% Active Attitude Control Functions:
+################################################################################
+
+def close_loop_TF(form='freq'):
+    """"
+    Input:
+        - form: string with the form of the loop
+                "gains" -> outputs the TF with Kp, Kd, I as cosntants
+                "freq" -> outputs the TF with w_n, xi  as constants
+    Output:
+        - TF(tf): transfer function for a close-loop system with PD control
+    """
+    if form == "gains":
+        TF_num = (Symbol('K_p') / (Symbol('I')*Symbol('s')
+                                   ** 2 + Symbol('K_d')*Symbol('s')))
+        TF_den = (Symbol('I') + Symbol('K_p') / (Symbol('I') *
+                                                 Symbol('s')**2 + Symbol('K_d')*Symbol('s')))
+    elif form == "freq":
+        omega_n_sym = Symbol('\omega_n')
+        xi_sym = Symbol('xi')
+        s_sym = Symbol('s')
+
+        TF_num = omega_n_sym**2
+        TF_den = s_sym**2 + 2*xi_sym*omega_n_sym*s_sym + omega_n_sym**2
+    else:
+        raise ValueError("form must be 'gains' or 'freq'")
+
+    TF = TF_num / TF_den
+    return TF
+    
+################################################################################
+def max_overshoot_CLTF(known_real_part='y'):
+    """
+    Maximum overshoot for a close-loop system with PD control.
+
+    Input:
+        - known_real_part(string):
+            - 'y': real part of the system is known
+            - 'n': real part of the system is unknown
+    """
+    xi_sym = symbols('xi')
+    omega_nsym, omega_dsym = symbols('omega_n omega_d')
+
+    if known_real_part == 'y':
+        xiomega_n_sym = xi_sym*omega_nsym
+        Mp = exp(-pi*xiomega_n_sym/omega_dsym)
+    elif known_real_part == 'n':
+        Mp = exp(-pi*xi_sym/(1-xi_sym**2) ** 0.5)
+    else:
+        raise ValueError('known_real_part must be "y" or "n"')
+    return Mp
+
+################################################################################
+def syms2tf(TF_sym):
+    """
+    Get transfer function from equation. Plot pzmap, rlocus, stepresponse
+    Input:
+     - eq(sym): symbolic equation
+    Output
+     - TF(tf): transfer function
+    """
+    import control as ctl
+    import matplotlib.pyplot as plt
+    #Get num and den of Symbolic TF
+    symNum, symDen = numer(TF_sym), denom(TF_sym)
+
+    # Convert Symbolic num and den to polynomial
+    TFnum = Poly(symNum, Symbol('s')).all_coeffs()
+    TFden = Poly(symDen, Symbol('s')).all_coeffs()
+    TFnum = np.array(TFnum).astype(float)
+    TFden = np.array(TFden).astype(float)
+
+    TF = ctl.tf(TFnum, TFden)
+
+    ctl.pzmap(TF, plot=True, grid=True)
+    plt.show()
+
+    ctl.rlocus(TF)
+    plt.show()
+
+    T, yout = ctl.step_response(TF)  # , T=np.linspace(0, 5, 100))
+    plt.plot(T, yout)
+    plt.show()
+
+    return TF

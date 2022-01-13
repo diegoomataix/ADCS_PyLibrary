@@ -559,6 +559,55 @@ def eulerEq(time, w, I1, I2, I3):
     dot_w = np.linalg.inv(I) @ (np.cross(-w, (I @ w)))
 
     return dot_w
+
+################################################################################
+def gravity_gradient_Tb(I, R_0b_vec, R0G_vec=None): 
+    """
+    This function calculates the gravity gradient torque in body coordinates.
+    
+    Input:
+    - I:  spacecraft inertia matrix
+    - R0G: spacecraft orbital position vector in ECI coordinates
+    - R_0b: spacecraft position vector in body coordinates
+
+    Note! Units are in km
+    """
+    ## Initialise
+    mu = 3.986e5  # km^3/s^2
+    # magnitude of spacecraft orbital position vector in body coordinates:
+    if R0G_vec is None:
+        R0 = np.linalg.norm(R_0b_vec)  # km
+    if R0G_vec is not None:
+        R0 = np.linalg.norm(R0G_vec)  # km
+    Tgg_b = (3*mu) / (R0**5) * skew(R_0b_vec) @ I @ R_0b_vec
+
+    return Tgg_b
+
+################################################################################
+def gravity_gradient_Tb_aprox(I, theta, R0=None, R_0b_vec=None):  
+    """
+    This function calculates the gravity gradient torque in body coordinates.
+    Uses small angle aproximation (only for 321 sequence)
+    
+    Input:
+    - I:  spacecraft inertia matrix
+    - theta: spacecraft Euler angles
+    - R0: magnitude of spacecraft orbital position vector
+    - R_0b: spacecraft position vector in body coordinates
+
+    Note! Units are in km
+    """
+    ## Initialise
+    mu = 3.986e5  # km^3/s^2
+    if R0 is None and R_0b_vec is not None:
+        # magnitude of spacecraft orbital position vector in body coordinates:
+        R0 = np.linalg.norm(R_0b_vec)  # km
+    omega2 = mu/(R0**3)
+
+    Tgg_b = (3*omega2) * np.array([ (I[2] - I[1])*theta[0], (I[2] - I[0])*theta[1], 0 ])
+
+    return Tgg_b
+
 ################################################################################
 ################################################################################
 #%% Complete Attitude Kinematics

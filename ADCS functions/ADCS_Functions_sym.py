@@ -18,7 +18,22 @@ class IJKReferenceFrame(ReferenceFrame):
 ################################################################################
 #%% Basic functions
 ################################################################################
+def sim2num(sim_vec, simsubs, numsubs, simsubs2=None, numsubs2=None, simsubs3=None, numsubs3=None):
+    """
+    Function to convert a symbolic vector to a numerical vector (numpy array)
+    """
+    if simsubs2 is None and simsubs3 is None:
+        num_var = np.asarray(flatten(np.array(sim_vec.subs(
+            simsubs, numsubs)).astype(np.float64)))
+    elif simsubs3 is None:
+        num_var = np.asarray(flatten(np.array(sim_vec.subs(
+            simsubs, numsubs).subs(simsubs2, numsubs2)).astype(np.float64)))
+    else:
+        num_var = np.asarray(flatten(np.array(sim_vec.subs(
+            simsubs, numsubs).subs(simsubs2, numsubs2).subs(simsubs3, numsubs3)).astype(np.float64)))
+    return num_var
 
+################################################################################
 def vector_sym(sym1=symbols('a1'), sym2=symbols('a2'), sym3=symbols('a3')):
     """
     Function to symbolically display a 3x1 vector
@@ -383,3 +398,43 @@ def Inertia_cylinder():
     I2 = I1
     I3 = 1/2 * m * r**2
     return I1, I2, I3
+
+################################################################################
+#%% Attitude Dynamics Functions:
+################################################################################
+
+def eq_torquefree_motion(a):
+    """
+    Equation of torque free motion for dual spin systems in body coordinates.
+
+    Input:
+        a: wheel spin axis
+    """
+    # Define the symbolic variables
+    omega1sym, omega2sym, omega3sym = symbols(
+        '\omega_1 \omega_2 \omega_3')
+    dotomega1sym, dotomega2sym, dotomega3sym = symbols(
+        '\dot{\omega}_1 \dot{\omega}_2 \dot{\omega}_3')
+    I1_sym, I2_sym, I3_sym = symbols('I1, I2, I3')
+    hs_sym = symbols('h_s')
+
+    # wheel spin axis vector in body coordinates
+    if a == 1:
+        a_vecsym = Matrix([1, 0, 0])
+    elif a == 2:
+        a_vecsym = Matrix([0, 1, 0])
+    elif a == 3:
+        a_vecsym = Matrix([0, 0, 1])
+    else:
+        print('a must be 1, 2 or 3')
+
+    # Define the matrices
+    omega_vecsym = Matrix([omega1sym, omega2sym, omega3sym])
+    I_vecsym = Matrix([[I1_sym, 0, 0], [0, I2_sym, 0], [0, 0, I3_sym]])
+    dotomega_vecsym = Matrix([dotomega1sym, dotomega2sym, dotomega3sym])
+
+    # Define the equation
+    T_vecsym = I_vecsym * dotomega_vecsym + \
+        omega_vecsym.cross(I_vecsym * omega_vecsym + a_vecsym*hs_sym)
+
+    return T_vecsym

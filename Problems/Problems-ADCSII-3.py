@@ -23,3 +23,4 @@ coef = ((3 * G * M) / r**4) * r_e**2 * J2
 print(coef)
 
 
+print(constants.R_earth.value)

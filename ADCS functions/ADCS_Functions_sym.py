@@ -592,10 +592,10 @@ def non_spherical_pot(n, m, subs=False, Jnmval=None, lamb_nm_val=None, h_orbit=N
 
     if subs is True:
         a_r = a_r.subs(R_e, 6.371e6).subs(
-            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb, lamb_nm_val).simplify()
+            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb_nm, lamb_nm_val).simplify()
         a_phi = a_phi.subs(R_e, 6.371e6).subs(
-            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb, lamb_nm_val).simplify()
+            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb_nm, lamb_nm_val).simplify()
         a_lamb = a_lamb.subs(R_e, 6.371e6).subs(
-            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb, lamb_nm_val).simplify()
+            G, 6.6743e-11).subs(r, h_orbit+6.371e6).subs(M, 5.972167867791379e+24).subs(Jnm, Jnmval).subs(lamb_nm, lamb_nm_val).simplify()
 
     return Pn, Pnm, Unm, a_r, a_phi, a_lamb
